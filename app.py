@@ -4,9 +4,12 @@ import sqlite3, string, random
 app = Flask(__name__)
 DB = 'urls.db'
 
+# 🔧 Ensure DB is initialized every time the app starts
 def init_db():
     with sqlite3.connect(DB) as conn:
         conn.execute('CREATE TABLE IF NOT EXISTS urls (short TEXT PRIMARY KEY, long TEXT)')
+
+init_db()  # ✅ This now runs even on Render (outside __main__)
 
 def generate_code(length=6):
     return ''.join(random.choices(string.ascii_letters + string.digits, k=length))
@@ -21,8 +24,6 @@ def index():
             conn.execute('INSERT INTO urls (short, long) VALUES (?, ?)', (short_code, long_url))
     return render_template('index.html', short_code=short_code)
 
-
-
 @app.route('/<short>')
 def redirect_url(short):
     with sqlite3.connect(DB) as conn:
@@ -30,7 +31,3 @@ def redirect_url(short):
     if result:
         return redirect(result[0])
     return "URL not found", 404
-
-if __name__ == '__main__':
-    init_db()
-    app.run(debug=True)
